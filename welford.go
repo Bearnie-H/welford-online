@@ -7,7 +7,7 @@ import (
 
 type WelfordAggregate interface {
 	Reset() WelfordAggregate
-	Update(float64) WelfordAggregate
+	Update(...float64) WelfordAggregate
 	Count() int
 	Mean() float64
 	Variance() float64
@@ -56,12 +56,21 @@ func (A *Aggregate) Reset() *Aggregate {
 //
 // This function accepts a new random sample, and updates the internal state of
 // the Aggregate to account for the newly provided sample value.
-func (A *Aggregate) Update(NewValue float64) *Aggregate {
+func (A *Aggregate) Update(Values ...float64) *Aggregate {
+
+	for _, v := range Values {
+		A = A.update(v)
+	}
+
+	return A
+}
+
+func (A *Aggregate) update(Value float64) *Aggregate {
 
 	A.count++
-	Delta := NewValue - A.mean
+	Delta := Value - A.mean
 	A.mean += Delta / float64(A.count)
-	Delta2 := NewValue - A.mean
+	Delta2 := Value - A.mean
 	A.m2 += Delta * Delta2
 
 	return A
@@ -131,12 +140,12 @@ func (A *ConcurrentAggregate) Reset() *ConcurrentAggregate {
 //
 // This function accepts a new random sample, and updates the internal state of
 // the ConcurrentAggregate to account for the newly provided sample value.
-func (A *ConcurrentAggregate) Update(NewValue float64) *ConcurrentAggregate {
+func (A *ConcurrentAggregate) Update(Values ...float64) *ConcurrentAggregate {
 
 	A.mu.Lock()
 	defer A.mu.Unlock()
 
-	A.Aggregate.Update(NewValue)
+	A.Aggregate.Update(Values...)
 	return A
 
 }
